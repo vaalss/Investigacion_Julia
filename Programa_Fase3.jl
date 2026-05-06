@@ -14,6 +14,18 @@ function prioridad(op)
     end
 end
 
+# Función para validar los caracteres de la expresión
+function es_token_valido(token)
+    if occursin(r"^\d+$", token)
+        return true
+    elseif token in ["+", "-", "*", "/", "(", ")"]
+        return true
+    else
+        return false
+    end
+end
+
+
 # Función para pasar de infix a postfix
 function infix_to_postfix(expresion)
     salida = [] # Construye el resultado
@@ -22,6 +34,11 @@ function infix_to_postfix(expresion)
     tokens = split(expresion) 
 
     for token in tokens
+        if !es_token_valido(token)
+            println("Error: Token inválido -> ", token)
+            return nothing
+        end
+
         if occursin(r"^\d+$", token) # Verifica si el token contiene únicamente dígitos
             push!(salida, token)
         
@@ -38,7 +55,7 @@ function infix_to_postfix(expresion)
             while !isempty(pila) && prioridad(pila[end]) >= prioridad(token) # Si hay un operador de mayor (o igual) prioridad en pila
                 push!(salida, pop!(pila))                                    # Lo envía a salida antes que el actual
             end
-            push!(pila)
+            push!(pila, token)
         end
     end
     
@@ -68,19 +85,27 @@ function evaluar_postfix(postfix)
             elseif token == "*"
                 push!(pila, a * b)
             elseif token == "/"
+                if b == 0
+                    println("Error: División entre cero")
+                    return nothing
+                end
                 push!(pila, a/b)
             end
         end
     end
 
-    return pila
+    return pila[1]
 end
 
 # Programa principal
-expresion = "3 + 5 * ( 2 + 1 )"
+expresion = "3 + 5 * ( 2 + 1 ) + ( 4 / 0 )"
 
 postfix = infix_to_postfix(expresion)
-println("Postfix: ", postfix)
+if postfix !== nothing 
+    println("Postfix: ", postfix)
 
-resultado = evaluar_postfix(postfix)
-println("Resultado: ", resultado)
+    resultado = evaluar_postfix(postfix)
+    if resultado !== nothing
+        println("Resultado: ", resultado)
+    end
+end
